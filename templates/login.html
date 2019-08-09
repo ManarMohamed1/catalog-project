@@ -1,0 +1,125 @@
+<!-- The top of file index.html -->
+<html itemscope itemtype="http://schema.org/Article">
+<head>
+	<!-- BEGIN Pre-requisites -->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+	</script>
+	<script src="https://apis.google.com/js/client:platform.js?onload=start" async defer>
+	</script>
+	<!-- END Pre-requisites -->
+
+	<!-- Continuing the <head> section -->
+	<script>
+		function start() {
+		gapi.load('auth2', function() {
+			auth2 = gapi.auth2.init({
+			client_id: '1001767261864-efc6vml2tg1k556qkmqveh6ai1fd03q8.apps.googleusercontent.com',
+			// Scopes to request in addition to 'profile' and 'email'
+			//scope: 'additional_scope'
+			});
+		});
+		}
+	</script>
+</head>
+<body>
+	<!-- Add where you want your sign-in button to render -->
+	<!-- Use an image that follows the branding guidelines in a real app -->
+	<button id="signinButton">Sign in with Google</button>
+	<script>
+	$('#signinButton').click(function() {
+		// signInCallback defined in step 6.
+		auth2.grantOfflineAccess().then(signInCallback);
+	});
+	</script>
+	<!-- Last part of BODY element in file index.html -->
+	<script>
+    function signInCallback(authResult) {
+		if (authResult['code']) {
+			// Hide the sign-in button now that the user is authorized
+			$('#signinButton').attr('style', 'display: none');
+			// Send the one-time-use code to the server, if the server responds, write a 'login successful' message to the web page and then redirect back to the main restaurants page
+			$.ajax({
+			type: 'POST',
+			url: '/gconnect?state={{STATE}}',
+			processData: false,
+			data: authResult['code'],
+			contentType: 'application/octet-stream; charset=utf-8',
+			success: function(result) {
+				// Handle or verify the server response if necessary.
+				if (result) {
+				$('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
+				setTimeout(function() {
+				window.location.href = "/restaurant";
+				}, 4000);
+				
+			} else if (authResult['error']) {
+			console.log('There was an error: ' + authResult['error']);
+		} else {
+				$('#result').html('Failed to make a server-side call. Check your configuration and console.');
+				}
+			}
+			
+		}); } }
+    </script>
+
+	<div id="fb-root"></div>
+	<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.3&appId=424643904928433&autoLogAppEvents=1"></script>
+	<script>
+	window.fbAsyncInit = function() {
+		FB.init({
+		appId      : '{424643904928433}',
+		cookie     : true,
+		xfbml      : true,
+		version    : '{2.8}'
+		});
+		
+		FB.AppEvents.logPageView();   
+		
+	};
+
+	(function(d, s, id){
+		var js, fjs = d.getElementsByTagName(s)[0];
+		if (d.getElementById(id)) {return;}
+		js = d.createElement(s); js.id = id;
+		js.src = "https://connect.facebook.net/en_US/sdk.js";
+		fjs.parentNode.insertBefore(js, fjs);
+	}(document, 'script', 'facebook-jssdk'));
+
+	  // Here we run a very simple test of the Graph API after login is
+  	// successful.  See statusChangeCallback() for when this call is made.
+  	function sendTokenToServer() {
+    	var access_token = FB.getAuthResponse()['accessToken'];
+    	console.log(access_token)
+    	console.log('Welcome!  Fetching your information.... ');
+    	FB.api('/me', function(response) {
+      	console.log('Successful login for: ' + response.name);
+     	$.ajax({
+      	type: 'POST',
+      	url: '/fbconnect?state={{STATE}}',
+     	processData: false,
+      	data: access_token,
+      	contentType: 'application/octet-stream; charset=utf-8',
+      	success: function(result) {
+        // Handle or verify the server response if necessary.
+        	if (result) {
+          	$('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
+         	setTimeout(function() {
+          	window.location.href = "/restaurant";
+         	}, 4000);
+          
+      	} else {
+        $('#result').html('Failed to make a server-side call. Check your configuration and console.');
+         }
+      }
+      
+  });
+
+	</script>
+	<button>
+        <fb:login-button scope="public_profile,email" onlogin="sendTokenToServer();">
+			<a href='javascript:sendTokenToServer()'>Login with Facebook</a>
+		</fb:login-button>
+	</button>
+</body>
+</html>
+
